@@ -127,7 +127,7 @@ namespace Jack
             jack_error("Can't open a new JACK client");
             return false;
         }
-        
+
         if (jack_set_process_callback(fClient, SetProcess, this) < 0) {
             goto fail;
         }
@@ -135,11 +135,11 @@ namespace Jack
         if (jack_set_buffer_size_callback(fClient, SetBufferSize, this) < 0) {
             goto fail;
         }
-        
+
         if (jack_set_sample_rate_callback(fClient, SetSampleRate, this) < 0) {
             goto fail;
         }
-        
+
         if (jack_set_latency_callback(fClient, LatencyCallback, this) < 0) {
             goto fail;
         }
@@ -431,6 +431,7 @@ namespace Jack
         try {
             return static_cast<JackNetMaster*>(arg)->Process();
         } catch (JackNetException& e) {
+            jack_error(e.what());
             return 0;
         }
     }
@@ -439,7 +440,7 @@ namespace Jack
     {
         static_cast<JackNetMaster*>(arg)->ConnectCallback(a, b, connect);
     }
-    
+
     void JackNetMaster::ConnectCallback(jack_port_id_t a, jack_port_id_t b, int connect)
     {
         jack_info("JackNetMaster::ConnectCallback a = %d b = %d connect = %d", a, b, connect);
@@ -512,6 +513,7 @@ namespace Jack
         // encode the first packet
         EncodeSyncPacket();
 
+
         if (SyncSend() == SOCKET_ERROR) {
             return SOCKET_ERROR;
         }
@@ -532,15 +534,15 @@ namespace Jack
         // receive sync
         int res = SyncRecv();
         switch (res) {
-        
+
             case NET_SYNCHING:
             case SOCKET_ERROR:
                 return res;
-                
+
             case SYNC_PACKET_ERROR:
-                 // Since sync packet is incorrect, don't decode it and continue with data
-                 break;
-                
+                // Since sync packet is incorrect, don't decode it and continue with data
+                break;
+
             default:
                 // Decode sync
                 int unused_frames;
@@ -551,7 +553,7 @@ namespace Jack
 #ifdef JACK_MONITOR
         fNetTimeMon->Add((((float)(GetMicroSeconds() - begin_time)) / (float) fPeriodUsecs) * 100.f);
 #endif
-      
+
         // receive data
         res = DataRecv();
         switch (res) {
@@ -825,6 +827,7 @@ namespace Jack
                     return;
                 }
             }
+            CleanupMasters();
 
             if (rx_bytes == sizeof(session_params_t)) {
                 switch (GetPacketType(&host_params))
@@ -928,6 +931,31 @@ namespace Jack
             return 1;
         }
         return 0;
+    }
+
+    int JackNetMasterManager::CleanupMasters() {
+        int res = 0;
+        jack_log("JackNetMasterManager::CleanupMasters");
+
+        master_list_it_t master_it = fMasterList.begin();
+        while (master_it != fMasterList.end()) {
+            if((*master_it)->fExit) {
+                res = 1;
+                jack_log("JackNetMasterManager::CleanupMasters remove Master ID = %u", (*master_it)->fParams.fID);
+
+                if (fAutoSave) {
+                    fMasterConnectionList[(*master_it)->fParams.fName].clear();
+                    (*master_it)->SaveConnections(fMasterConnectionList[(*master_it)->fParams.fName]);
+                }
+
+                master_list_it_t next_it = fMasterList.erase(master_it);
+                delete (*master_it);
+                master_it = next_it;
+                continue;
+            }
+            master_it++;
+        }
+        return res;
     }
 }//namespace
 

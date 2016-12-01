@@ -391,24 +391,26 @@ namespace Jack
 
         // stop process
         fRunning = false;
-
-        // send a 'multicast euthanasia request' - new socket is required on macosx
-        jack_info("Exiting '%s' %s", fParams.fName, fMulticastIP);
-        SetPacketType(&fParams, KILL_MASTER);
-        JackNetSocket mcast_socket(fMulticastIP, fSocket.GetPort());
-
-        session_params_t net_params;
-        memset(&net_params, 0, sizeof(session_params_t));
-        SessionParamsHToN(&fParams, &net_params);
-
-        if (mcast_socket.NewSocket() == SOCKET_ERROR) {
-            jack_error("Can't create socket : %s", StrError(NET_ERROR_CODE));
-        }
-        if (mcast_socket.SendTo(&net_params, sizeof(session_params_t), 0, fMulticastIP) == SOCKET_ERROR) {
-            jack_error("Can't send suicide request : %s", StrError(NET_ERROR_CODE));
-        }
-
-        mcast_socket.Close();
+        //signal stop thread
+        fExit = true;
+//
+//        // send a 'multicast euthanasia request' - new socket is required on macosx
+//        jack_info("Exiting '%s' %s", fParams.fName, fMulticastIP);
+//        SetPacketType(&fParams, KILL_MASTER);
+//        JackNetSocket mcast_socket(fMulticastIP, fSocket.GetPort());
+//
+//        session_params_t net_params;
+//        memset(&net_params, 0, sizeof(session_params_t));
+//        SessionParamsHToN(&fParams, &net_params);
+//
+//        if (mcast_socket.NewSocket() == SOCKET_ERROR) {
+//            jack_error("Can't create socket : %s", StrError(NET_ERROR_CODE));
+//        }
+//        if (mcast_socket.SendTo(&net_params, sizeof(session_params_t), 0, fMulticastIP) == SOCKET_ERROR) {
+//            jack_error("Can't send suicide request : %s", StrError(NET_ERROR_CODE));
+//        }
+//
+//        mcast_socket.Close();
     }
 
     void JackNetMasterInterface::FatalRecvError()
@@ -418,7 +420,8 @@ namespace Jack
         // ask to the manager to properly remove the master
         Exit();
         // UGLY temporary way to be sure the thread does not call code possibly causing a deadlock in JackEngine.
-        ThreadExit();
+        //ThreadExit();
+        throw JackNetException("Recv connection lost error");
     }
 
      void JackNetMasterInterface::FatalSendError()
@@ -428,7 +431,8 @@ namespace Jack
         // ask to the manager to properly remove the master
         Exit();
         // UGLY temporary way to be sure the thread does not call code possibly causing a deadlock in JackEngine.
-        ThreadExit();
+        //ThreadExit();
+        throw JackNetException("Send connection lost error");
     }
 
     int JackNetMasterInterface::Recv(size_t size, int flags)

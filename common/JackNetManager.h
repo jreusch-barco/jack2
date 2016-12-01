@@ -125,6 +125,7 @@ namespace Jack
             JackNetMaster* InitMaster(session_params_t& params);
             master_list_it_t FindMaster(uint32_t client_id);
             int KillMaster(session_params_t* params);
+            int CleanupMasters();
             int SyncCallback(jack_transport_state_t state, jack_position_t* pos);
             int CountIO(const char* type, int flags);
             void ShutDown();
