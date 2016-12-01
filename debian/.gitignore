@@ -1,0 +1,7 @@
+*.debhelper*
+tmp/
+jackd2/
+libjack-jackd2-dev/
+libjack-jackd2-0/
+*.substvars
+files

@@ -1,0 +1,15 @@
+From: Arthur Marble <arthur@info9.net>
+Bugs-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=757820
+Forwarded: Yes, drop with next upstream import
+Description: Fix FTBFS with clang
+--- a/common/memops.c
++++ b/common/memops.c
+@@ -198,7 +198,7 @@ static inline __m128i float_24_sse(__m12
+  */
+ static unsigned int seed = 22222;
+ 
+-inline unsigned int fast_rand() {
++static inline unsigned int fast_rand() {
+ 	seed = (seed * 96314165) + 907633515;
+ 	return seed;
+ }

@@ -1,62 +1,39 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 # encoding: utf-8
-# Thomas Nagy, 2006-2010 (ita)
-# Ralf Habacker, 2006 (rh)
-# Yinon Ehrlich, 2009
-# Michael Kuhn, 2009
+# WARNING! Do not edit! http://waf.googlecode.com/git/docs/wafbook/single.html#_obtaining_the_waf_file
 
-from waflib.Tools import ccroot, ar
+from waflib.Tools import ccroot,ar
 from waflib.Configure import conf
-
-@conf
 def find_xlcxx(conf):
-	"""
-	Detect the Aix C++ compiler
-	"""
-	cxx = conf.find_program(['xlc++_r', 'xlc++'], var='CXX')
+	cxx=conf.find_program(['xlc++_r','xlc++'],var='CXX')
+	cxx=conf.cmd_to_list(cxx)
 	conf.get_xlc_version(cxx)
-	conf.env.CXX_NAME = 'xlc++'
-
-@conf
+	conf.env.CXX_NAME='xlc++'
+	conf.env.CXX=cxx
 def xlcxx_common_flags(conf):
-	"""
-	Flags required for executing the Aix C++ compiler
-	"""
-	v = conf.env
-
-	v['CXX_SRC_F']           = []
-	v['CXX_TGT_F']           = ['-c', '-o']
-
-	# linker
-	if not v['LINK_CXX']: v['LINK_CXX'] = v['CXX']
-	v['CXXLNK_SRC_F']        = []
-	v['CXXLNK_TGT_F']        = ['-o']
-	v['CPPPATH_ST']          = '-I%s'
-	v['DEFINES_ST']          = '-D%s'
-
-	v['LIB_ST']              = '-l%s' # template for adding libs
-	v['LIBPATH_ST']          = '-L%s' # template for adding libpaths
-	v['STLIB_ST']            = '-l%s'
-	v['STLIBPATH_ST']        = '-L%s'
-	v['RPATH_ST']            = '-Wl,-rpath,%s'
-
-	v['SONAME_ST']           = []
-	v['SHLIB_MARKER']        = []
-	v['STLIB_MARKER']        = []
-
-	# program
-	v['LINKFLAGS_cxxprogram']= ['-Wl,-brtl']
-	v['cxxprogram_PATTERN']  = '%s'
-
-	# shared library
-	v['CXXFLAGS_cxxshlib']   = ['-fPIC']
-	v['LINKFLAGS_cxxshlib']  = ['-G', '-Wl,-brtl,-bexpfull']
-	v['cxxshlib_PATTERN']    = 'lib%s.so'
-
-	# static lib
-	v['LINKFLAGS_cxxstlib']  = []
-	v['cxxstlib_PATTERN']    = 'lib%s.a'
-
+	v=conf.env
+	v['CXX_SRC_F']=[]
+	v['CXX_TGT_F']=['-c','-o']
+	if not v['LINK_CXX']:v['LINK_CXX']=v['CXX']
+	v['CXXLNK_SRC_F']=[]
+	v['CXXLNK_TGT_F']=['-o']
+	v['CPPPATH_ST']='-I%s'
+	v['DEFINES_ST']='-D%s'
+	v['LIB_ST']='-l%s'
+	v['LIBPATH_ST']='-L%s'
+	v['STLIB_ST']='-l%s'
+	v['STLIBPATH_ST']='-L%s'
+	v['RPATH_ST']='-Wl,-rpath,%s'
+	v['SONAME_ST']=[]
+	v['SHLIB_MARKER']=[]
+	v['STLIB_MARKER']=[]
+	v['LINKFLAGS_cxxprogram']=['-Wl,-brtl']
+	v['cxxprogram_PATTERN']='%s'
+	v['CXXFLAGS_cxxshlib']=['-fPIC']
+	v['LINKFLAGS_cxxshlib']=['-G','-Wl,-brtl,-bexpfull']
+	v['cxxshlib_PATTERN']='lib%s.so'
+	v['LINKFLAGS_cxxstlib']=[]
+	v['cxxstlib_PATTERN']='lib%s.a'
 def configure(conf):
 	conf.find_xlcxx()
 	conf.find_ar()
@@ -65,3 +42,5 @@ def configure(conf):
 	conf.cxx_add_flags()
 	conf.link_add_flags()
 
+conf(find_xlcxx)
+conf(xlcxx_common_flags)
